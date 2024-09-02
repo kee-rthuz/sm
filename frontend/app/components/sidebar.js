@@ -38,7 +38,7 @@ const MenuItem = ({ icon: Icon, label, href, isActive, onClick, subItems }) => {
     <div>
       <Link 
         href={href} 
-        className={`flex items-center text-purple-300 hover:text-white px-6 py-3 rounded-lg ${isActive ? 'bg-purple-700 text-white' : ''}`}
+        className={`flex items-center text-purple-300 hover:text-white px-6 py-3 rounded-lg`}
         onClick={onClick}
       >
         <Icon size={20} className="mr-3" />
@@ -112,14 +112,15 @@ const Sidebar = () => {
         } lg:translate-x-0 shadow-lg overflow-y-auto`}
       >
         <div className="p-6 flex flex-col  h-full">
-          {/* <div className="flex items-center mb-8">
-            <div className=" p-2">
-              <Image src="/logo.png" alt="logo" width={170} height={32} />
-            </div>
-            <h1 className="text-xl font-bold ml-3 text-white">My-Task</h1>
-          </div> */}
 
-          <nav className="flex-grow space-y-10 mt-28">
+
+          <div className="flex items-center mb-8">
+            <div className=" p-2 ml-10 mt-10">
+              <Image src="/l.png" alt="logo" width={100} height={32} />
+            </div>
+          </div>
+
+          <nav className="flex-grow space-y-12 mt-24">
             {menuItems.map((item, index) => (
               <MenuItem
                 key={index}
