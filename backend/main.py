@@ -16,8 +16,9 @@ from .employees import router as employee_router
 from .comment import router as comments_router
 from .tasks import router as tasks_router
 from .attendance import router as attendance_router
-
-# Load environment variables
+from .leave_request import router as leave_request_router
+from .department import router as department_router
+from .holiday import router as holiday_router# Load environment variables
 load_dotenv()
 
 app = FastAPI()
@@ -56,7 +57,9 @@ app.include_router(employee_router, prefix="/employees")
 app.include_router(comments_router)
 app.include_router(tasks_router, prefix="/tasks")
 app.include_router(attendance_router, prefix="/attendance")
-
+app.include_router(leave_request_router, prefix="/leave_request")
+app.include_router(department_router, prefix="/department")
+app.include_router(holiday_router, prefix="/api")
 
 @app.post("/signup", response_model=User)
 async def signup(user: UserCreate):

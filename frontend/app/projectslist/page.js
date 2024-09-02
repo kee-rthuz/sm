@@ -1,4 +1,5 @@
-"use client";
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FixedHeader from '../components/Header';
@@ -14,7 +15,6 @@ function ProjectCard({ project, onAddMember, onClick, onEdit, onStatusChange, on
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [localProgress, setLocalProgress] = useState(project.progress);
   const validMembers = typeof project.members === 'number' && project.members >= 0 ? project.members : 0;
-  const router = useRouter();
 
   const toggleStatusDropdown = () => {
     setIsStatusDropdownOpen(!isStatusDropdownOpen);
@@ -23,7 +23,6 @@ function ProjectCard({ project, onAddMember, onClick, onEdit, onStatusChange, on
   const handleStatusChange = (status) => {
     onStatusChange(project.id, status);
     setIsStatusDropdownOpen(false);
-    router.push(`/projects/${status.toLowerCase()}`);
   };
 
   const handleProgressChange = (e) => {
@@ -64,7 +63,7 @@ function ProjectCard({ project, onAddMember, onClick, onEdit, onStatusChange, on
           {isStatusDropdownOpen && (
             <div className="absolute z-10 mt-1 right-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
               <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                {['Started', 'Approval', 'Completed'].map((status) => (
+                {['Not Started', 'Started', 'Approval', 'Completed'].map((status) => (
                   <a
                     key={status}
                     href="#"
@@ -348,7 +347,7 @@ function ProjectDashboard() {
         console.error('Error fetching project data:', error);
         setLoading(false);
       });
-  }, []);
+  }, [isProjectCreated]);
 
   const handleProjectClick = (project) => {
     router.push(`/project/${project.id}`);
@@ -360,7 +359,6 @@ function ProjectDashboard() {
   };
 
   const handleProjectCreated = (newProject) => {
-    setProjects([...projects, newProject]);
     setIsProjectCreated(true);
   };
 
@@ -369,18 +367,34 @@ function ProjectDashboard() {
   };
 
   const handleStatusChange = (projectId, newStatus) => {
+    // Find the project to update
+    const projectToUpdate = projects.find(project => project.id === projectId);
+
+    if (!projectToUpdate) {
+      console.error('Project not found');
+      return;
+    }
+
+    // Create a copy of the project with the updated status
+    const updatedProject = {
+      ...projectToUpdate,
+      status: newStatus
+    };
+
     // Update the project status in the backend
     fetch(`http://localhost:8000/projects/${projectId}/`, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ status: newStatus }),
+      body: JSON.stringify(updatedProject),
       credentials: 'include',
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          return response.json().then(errorData => {
+            throw new Error(JSON.stringify(errorData));
+          });
         }
         return response.json();
       })
@@ -391,18 +405,34 @@ function ProjectDashboard() {
   };
 
   const handleProgressChange = (projectId, newProgress) => {
+    // Find the project to update
+    const projectToUpdate = projects.find(project => project.id === projectId);
+
+    if (!projectToUpdate) {
+      console.error('Project not found');
+      return;
+    }
+
+    // Create a copy of the project with the updated progress
+    const updatedProject = {
+      ...projectToUpdate,
+      progress: newProgress
+    };
+
     // Update the project progress in the backend
     fetch(`http://localhost:8000/projects/${projectId}/`, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ progress: newProgress }),
+      body: JSON.stringify(updatedProject),
       credentials: 'include',
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          return response.json().then(errorData => {
+            throw new Error(JSON.stringify(errorData));
+          });
         }
         return response.json();
       })
@@ -431,16 +461,12 @@ function ProjectDashboard() {
   };
 
   const handleFilterClick = (status) => {
-    if (status === 'Started') {
-      router.push('/projects/started');
-    } else if (status === 'Approval') {
-      router.push('/projects/approval');
-    } else if (status === 'Completed') {
-      router.push('/projects/completed');
-    } else {
-      setFilter(status);
-    }
+    setFilter(status);
   };
+
+  const filteredProjects = filter === 'All'
+    ? projects
+    : projects.filter(project => project.status === filter);
 
   return (
     <div className="max-w-7xl mx-auto p-4 mt-20">
@@ -449,7 +475,7 @@ function ProjectDashboard() {
         <h1 className="text-2xl font-bold mb-4 sm:mb-0">Projects</h1>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full sm:w-auto">
           <div className="flex flex-wrap mb-4 sm:mb-0">
-            {['All', 'Started', 'Approval', 'Completed'].map((status) => (
+            {['All', 'Not Started', 'Started', 'Approval', 'Completed'].map((status) => (
               <button
                 key={status}
                 className={`px-3 py-1 mr-2 mb-2 sm:mb-0 text-sm ${
@@ -495,7 +521,7 @@ function ProjectDashboard() {
         <div className="text-center text-gray-600">Loading projects...</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project) => (
+          {filteredProjects.map((project) => (
             <ProjectCard
               key={project.id}
               project={project}
@@ -513,5 +539,4 @@ function ProjectDashboard() {
     </div>
   );
 }
-
 export default ProjectDashboard;

@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Depends, Request, HTTPException
+from fastapi import APIRouter,Depends, Request, HTTPException,status,Query
 from typing import List
 import logging
 from bson import ObjectId
@@ -23,20 +23,58 @@ async def get_database():
 async def create_task(task: TaskCreate, request: Request):
     logging.debug("Received request to create a task")
 
-    task_dict = task.dict()
-    task_dict["created_time"] = task_dict["dueDate"]  # Assign dueDate to created_time
-    result = await task_collection.insert_one(task_dict)
-    task_dict["id"] = str(result.inserted_id)
-    return TaskModel(**task_dict)
+    # Log the incoming task data
+    logging.debug(f"Received task data: {task.dict()}")
 
-@router.get("/", response_model=List[Task])
-async def read_tasks(request: Request):
+    try:
+        # Assuming you're storing the username as a string in the session
+        current_user = request.state.user  # This should now be a string (username)
+        task_dict = task.dict()
+        task_dict["created_time"] = datetime.utcnow()
+        task_dict["created_by"] = current_user  # Use the username string directly
+
+        # Ensure project_id is present before insertion
+        if not task_dict.get("project_id"):
+            logging.error("Project ID is missing from the task data")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Project ID is required"
+            )
+
+        result = await task_collection.insert_one(task_dict)
+        task_dict["id"] = str(result.inserted_id)
+
+        logging.info(f"Task created successfully: {task_dict}")
+
+        return Task(**task_dict)
+
+    except Exception as e:
+        logging.error(f"Failed to create task: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create task: {str(e)}"
+        )
+
+
+@router.get("/", response_model=List[TaskModel])
+async def read_tasks(request: Request, project_id: str = Query(...)):
     logging.debug("Received request to read tasks")
 
-    tasks = await task_collection.find().to_list(1000)
-    return [TaskModel(id=str(task["_id"]), **task) for task in tasks]
+    try:
+        # Filter tasks by project_id
+        tasks = await task_collection.find({"project_id": project_id}).to_list(1000)
 
-@router.get("/{task_id}", response_model=Task)
+        # Convert tasks to the TaskModel format
+        task_list = [TaskModel(id=str(task["_id"]), **task) for task in tasks]
+
+        return task_list
+
+    except Exception as e:
+        logging.error(f"Failed to read tasks: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to read tasks: {str(e)}"
+        )@router.get("/{task_id}", response_model=Task)
 async def read_task(task_id: str, request: Request):
     logging.debug(f"Received request to read task with ID: {task_id}")
 

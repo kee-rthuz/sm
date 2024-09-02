@@ -33,6 +33,7 @@ class ProjectCreate(BaseModel):
     budget: float
     priority: str
     description: Optional[str] = None
+    status: str = "Not Started"  # Default status
 
 class Project(ProjectCreate):
     id: str
@@ -75,6 +76,7 @@ class TaskCreate(BaseModel):
     dueDate: datetime  # Change the type to datetime
     status: str
     created_by: str
+    project_id: str 
 
 class Task(TaskCreate):
     id: str
@@ -92,3 +94,32 @@ class AttendanceUpdate(BaseModel):
     date: Optional[str] = None
     status: Optional[str] = None
     reason: Optional[str] = None
+    
+    
+class LeaveRequestCreate(BaseModel):
+    employee_id: str
+    name: str
+    leave_type: str
+    from_date: str  # Changed to string
+    to_date: str    # Changed to string
+    reason: Optional[str] = None
+    status: str = 'processing'  # Added status field with default value
+    
+class LeaveRequest(LeaveRequestCreate):
+    id: str
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())  # Store as ISO strin
+
+class DepartmentCreate(BaseModel):
+    head: str
+    name: str
+    employees: int
+
+class DepartmentUpdate(BaseModel):
+    head: Optional[str] = None
+    name: Optional[str] = None
+    employees: Optional[int] = None
+
+
+class HolidayCreate(BaseModel):
+    name: str
+    date: str

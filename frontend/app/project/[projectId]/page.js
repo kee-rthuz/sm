@@ -129,72 +129,113 @@ export default function KanbanBoard() {
   const [doingTasks, setDoingTasks] = useState([]);
   const [doneTasks, setDoneTasks] = useState([]);
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  const fetchTasks = async () => {
+  const extractProjectId = () => {
+    const pathParts = window.location.pathname.split('/');
+    return pathParts[pathParts.length - 1];
+  };
+  
+  const fetchTasks = async (projectId) => {
     try {
-      const response = await fetch('http://localhost:8000/tasks', {
+      const response = await fetch(`http://localhost:8000/tasks?project_id=${projectId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
       });
-
+  
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-
+  
       const tasks = await response.json();
-
+  
       if (!Array.isArray(tasks)) {
         throw new Error('Response is not an array');
       }
-
+  
       setNotDoingTasks(tasks.filter(task => task.status === 'No Progress' || task.assignedTo === ""));
       setDoingTasks(tasks.filter(task => task.status === 'In Progress' && task.assignedTo !== ""));
       setDoneTasks(tasks.filter(task => task.status === 'Complete'));
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
+      setErrorMessage('Failed to fetch tasks. Please try again.');
     }
   };
-
+  
   const handleAddTask = () => {
     setEditingTask(null);
     setIsTaskFormOpen(true);
   };
-
+  
   const handleCloseTaskForm = () => {
     setIsTaskFormOpen(false);
     setEditingTask(null);
   };
+  
+  // Example usage: Fetch tasks for a specific project
+  const projectId = extractProjectId();
+  fetchTasks(projectId);
+
 
   const handleTaskAdded = async (newTask) => {
+    let taskWithProjectId;
+  
     try {
+      setIsLoading(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+  
+      // Extract project ID from the current path
+      const pathParts = window.location.pathname.split('/');
+      const projectId = pathParts[pathParts.length - 1];
+  
+      // Include project_id in the newTask object
+      taskWithProjectId = {
+        ...newTask,
+        project_id: projectId
+      };
+  
       const response = await fetch('http://localhost:8000/tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify(newTask),
+        body: JSON.stringify(taskWithProjectId),
       });
-
+  
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to add task');
       }
-
+  
       await fetchTasks();
       setIsTaskFormOpen(false);
+      setSuccessMessage('Task added successfully');
     } catch (error) {
       console.error('Failed to add task:', error);
+      setErrorMessage(error.message);
+    } finally {
+      setIsLoading(false);
+      console.log('Sending task data:', JSON.stringify(taskWithProjectId));
     }
   };
 
   const handleTaskUpdate = async (taskId, updatedTask) => {
     try {
+      setIsLoading(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
       const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
@@ -210,13 +251,21 @@ export default function KanbanBoard() {
 
       await fetchTasks();
       setIsTaskFormOpen(false);
+      setSuccessMessage('Task updated successfully');
     } catch (error) {
       console.error('Failed to update task:', error);
+      setErrorMessage('Failed to update task. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleTaskDelete = async (taskId) => {
     try {
+      setIsLoading(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
       const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
         method: 'DELETE',
         headers: {
@@ -230,8 +279,12 @@ export default function KanbanBoard() {
       }
 
       await fetchTasks();
+      setSuccessMessage('Task deleted successfully');
     } catch (error) {
       console.error('Failed to delete task:', error);
+      setErrorMessage('Failed to delete task. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -254,6 +307,10 @@ export default function KanbanBoard() {
           Add Task
         </button>
       </div>
+
+      {isLoading && <p className="text-center">Loading...</p>}
+      {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
+      {errorMessage && <p className="text-red-500 text-center mb-4">{errorMessage}</p>}
 
       <div className="max-w-6xl ml-6">
         {[

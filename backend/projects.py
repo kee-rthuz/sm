@@ -38,6 +38,7 @@ async def create_project(request: Request, project: ProjectCreate):
         budget=project.budget,
         priority=project.priority,
         description=project.description,
+        status=project.status,  # Include status
         created_by=user_identifier
     )
 
@@ -62,8 +63,6 @@ async def get_projects(request: Request):
         logging.error("Error fetching projects: %s", str(e))
         raise HTTPException(status_code=400, detail=str(e))
 
-
-
 @router.get("/filtered/", response_model=list[Project])
 async def get_filtered_projects(request: Request, status: str = Query(..., description="Filter projects by status")):
     try:
@@ -85,6 +84,7 @@ async def get_filtered_projects(request: Request, status: str = Query(..., descr
     except Exception as e:
         logging.error("Error fetching filtered projects: %s", str(e))
         raise HTTPException(status_code=400, detail=str(e))
+
 @router.put("/{project_id}/", response_model=Project)
 async def update_project(project_id: str, project: ProjectCreate):
     try:

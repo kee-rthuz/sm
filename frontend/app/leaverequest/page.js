@@ -1,21 +1,47 @@
-
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FixedHeader from '../components/Header';
 import LeaveApplicationForm from '../leaverequest/LeaveAddForm';
-import { Check, X, Trash2 } from 'lucide-react';
-
-const leaveData = [
-  { id: '#EMP : 00001', name: 'Joan Dyer', type: 'Casual Leave', from: '12/03/2021', to: '14/03/2021', reason: 'Going to Holiday' },
-  { id: '#EMP : 00002', name: 'Sally Graham', type: 'Medical Leave', from: '01/05/2021', to: '06/05/2021', reason: 'Hospital Admit' },
-  // Add more data as needed
-];
+import { Trash2 } from 'lucide-react';
+import axios from 'axios';
 
 const LeaveRequestTable = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [leaveData, setLeaveData] = useState([]);
 
   const toggleForm = () => {
     setIsFormOpen(!isFormOpen);
+  };
+
+  const fetchLeaveRequests = () => {
+    axios.get('http://localhost:8000/leave_request')
+      .then(response => {
+        setLeaveData(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching leave requests:', error);
+      });
+  };
+
+  useEffect(() => {
+    // Initial fetch
+    fetchLeaveRequests();
+
+    // Polling mechanism to fetch leave requests every 5 seconds
+    const intervalId = setInterval(fetchLeaveRequests, 5000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const handleDelete = (leaveId) => {
+    axios.delete(`http://localhost:8000/leave_request/${leaveId}`)
+      .then(response => {
+        setLeaveData(leaveData.filter(leave => leave.id !== leaveId));
+      })
+      .catch(error => {
+        console.error('Error deleting leave request:', error);
+      });
   };
 
   return (
@@ -23,7 +49,7 @@ const LeaveRequestTable = () => {
       <FixedHeader />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <h1 className="text-2xl font-bold mb-2 sm:mb-0">Leave Request</h1>
-        <button 
+        <button
           className="bg-purple-900 text-white px-4 py-2 rounded w-full sm:w-auto"
           onClick={toggleForm}
         >
@@ -58,22 +84,16 @@ const LeaveRequestTable = () => {
           {leaveData.map((leave) => (
             <div key={leave.id} className="border-b p-4">
               <div className="flex items-center mb-2">
-                <img src="/api/placeholder/30/30" alt={leave.name} className="w-8 h-8 rounded-full mr-2" />
                 <span className="font-medium">{leave.name}</span>
               </div>
               <p className="text-sm text-red-500 mb-1">{leave.id}</p>
-              <p className="text-sm mb-1"><span className="font-medium">Type:</span> {leave.type}</p>
-              <p className="text-sm mb-1"><span className="font-medium">From:</span> {leave.from}</p>
-              <p className="text-sm mb-1"><span className="font-medium">To:</span> {leave.to}</p>
+              <p className="text-sm mb-1"><span className="font-medium">Type:</span> {leave.leave_type}</p>
+              <p className="text-sm mb-1"><span className="font-medium">From:</span> {leave.from_date}</p>
+              <p className="text-sm mb-1"><span className="font-medium">To:</span> {leave.to_date}</p>
               <p className="text-sm mb-2"><span className="font-medium">Reason:</span> {leave.reason}</p>
+              <p className="text-sm mb-2"><span className="font-medium">Status:</span> {leave.status}</p>
               <div className="flex justify-end">
-                <button className="text-green-600 hover:text-green-900 mr-4">
-                  <Check size={20} />
-                </button>
-                <button className="text-red-600 hover:text-red-900 mr-4">
-                  <X size={20} />
-                </button>
-                <button className="text-gray-600 hover:text-gray-900">
+                <button className="text-gray-600 hover:text-gray-900" onClick={() => handleDelete(leave.id)}>
                   <Trash2 size={20} />
                 </button>
               </div>
@@ -92,7 +112,7 @@ const LeaveRequestTable = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FROM</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TO</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REASON</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STATUS</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -101,22 +121,16 @@ const LeaveRequestTable = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500">{leave.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <img src="/api/placeholder/30/30" alt={leave.name} className="w-8 h-8 rounded-full mr-2" />
                       <span className="text-sm font-medium text-gray-900">{leave.name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leave.type}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leave.from}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leave.to}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leave.leave_type}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leave.from_date}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leave.to_date}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leave.reason}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{leave.status}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-green-600 hover:text-green-900 mr-2">
-                      <Check size={20} />
-                    </button>
-                    <button className="text-red-600 hover:text-red-900 mr-2">
-                      <X size={20} />
-                    </button>
-                    <button className="text-gray-600 hover:text-gray-900">
+                    <button className="text-gray-600 hover:text-gray-900" onClick={() => handleDelete(leave.id)}>
                       <Trash2 size={20} />
                     </button>
                   </td>

@@ -1,19 +1,82 @@
-import React, { useState } from 'react';
+'use client'
+import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { TextField, Button, MenuItem, Select, InputLabel, FormControl, Grid } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import axios from 'axios';
+
+// Configure Axios to include credentials
+axios.defaults.withCredentials = true;
 
 const LeaveApplicationForm = ({ onClose }) => {
   const [selectedLeave, setSelectedLeave] = useState('Medical Leave');
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [description, setDescription] = useState('');
+  const [user, setUser] = useState(null);
+  const [employeeId, setEmployeeId] = useState('');
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
+
+  useEffect(() => {
+    // Fetch current user information
+    axios.get('http://localhost:8000/current_user')
+      .then(response => {
+        setUser(response.data);
+        // Generate unique employee ID
+        setEmployeeId(`EMP:${String(response.data.id).padStart(4, '0')}`);
+      })
+      .catch(error => {
+        console.error('Error fetching user information:', error);
+      });
+
+    // Check if there are any pending leave requests
+    axios.get('http://localhost:8000/leave_request')
+      .then(response => {
+        const pendingRequest = response.data.find(leave => leave.employee_id === employeeId && leave.status === 'processing');
+        setHasPendingRequest(!!pendingRequest);
+      })
+      .catch(error => {
+        console.error('Error fetching leave requests:', error);
+      });
+  }, [employeeId]);
+
+  const handleSubmit = () => {
+    if (!user || !user.username) {
+      console.error('User information is not available.');
+      return;
+    }
+
+    if (hasPendingRequest) {
+      console.error('You have a pending leave request.');
+      return;
+    }
+
+    const leaveRequest = {
+      employee_id: employeeId,
+      name: user.username,
+      leave_type: selectedLeave,
+      from_date: fromDate.format('YYYY-MM-DD'),
+      to_date: toDate.format('YYYY-MM-DD'),
+      reason: description,
+      status: 'processing',
+    };
+
+    axios.post('http://localhost:8000/leave_request', leaveRequest)
+      .then(response => {
+        console.log('Leave request submitted:', response.data);
+        onClose();
+        window.location.reload();
+      })
+      .catch(error => {
+        console.error('Error submitting leave request:', error);
+      });
+  };
 
   return (
     <div className="flex items-center justify-center bg-gray-100 p-4 -ml-14 w-[650px]">
-      <div className="p-4   ">
+      <div className="p-4">
         <h2 className="text-xl mb-10">Leave Add</h2>
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -28,6 +91,7 @@ const LeaveApplicationForm = ({ onClose }) => {
                 <MenuItem value="Medical Leave">Medical Leave</MenuItem>
                 <MenuItem value="Casual Leave">Casual Leave</MenuItem>
                 <MenuItem value="Maternity Leave">Maternity Leave</MenuItem>
+                <MenuItem value="Bereavement Leave">Bereavement Leave</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -80,7 +144,7 @@ const LeaveApplicationForm = ({ onClose }) => {
 
           <Grid item xs={12}>
             <TextField
-              label="Description (optional)"
+              label="Reason for Leave"
               variant="outlined"
               multiline
               rows={3}
@@ -101,6 +165,8 @@ const LeaveApplicationForm = ({ onClose }) => {
             <Button
               variant="contained"
               className="mr-2"
+              onClick={handleSubmit}
+              disabled={hasPendingRequest}
             >
               Send
             </Button>
