@@ -1,11 +1,16 @@
+
+//    1  current code 
+
+
+
 // /** @type {import('tailwindcss').Config} */
 // module.exports = {
 //   darkMode: ["class"],
 //   content: [
-//     './pages/**/*.{js,jsx}',
-//     './components/**/*.{js,jsx}',
-//     './app/**/*.{js,jsx}',
-//     './src/**/*.{js,jsx}',
+//     './pages/**/*.{js,jsx,ts,tsx}',
+//     './components/**/*.{js,jsx,ts,tsx}',
+//     './app/**/*.{js,jsx,ts,tsx}',
+//     './src/**/*.{js,jsx,ts,tsx}',
 //   ],
 //   prefix: "",
 //   theme: {
@@ -51,6 +56,10 @@
 //           DEFAULT: "hsl(var(--card))",
 //           foreground: "hsl(var(--card-foreground))",
 //         },
+//         indigo: {
+//           500: '#5c6bc0',
+//           700: '#512da8',
+//         },
 //       },
 //       borderRadius: {
 //         lg: "var(--radius)",
@@ -66,15 +75,42 @@
 //           from: { height: "var(--radix-accordion-content-height)" },
 //           to: { height: "0" },
 //         },
+//         "slide-in": {
+//           '0%': { transform: 'translateX(100%)' },
+//           '100%': { transform: 'translateX(0)' },
+//         },
+//         "slide-out": {
+//           '0%': { transform: 'translateX(0)' },
+//           '100%': { transform: 'translateX(-100%)' },
+//         },
+
+//         rotateScale: {
+//           '0%, 100%': { transform: 'rotate(0deg) scale(1)' },
+//           '50%': { transform: 'rotate(180deg) scale(1.2)' },
+//         },
+
 //       },
 //       animation: {
 //         "accordion-down": "accordion-down 0.2s ease-out",
 //         "accordion-up": "accordion-up 0.2s ease-out",
+//         "slide-in": "slide-in 0.6s ease-in-out",
+//         "slide-out": "slide-out 0.6s ease-in-out",
+
+//         "rotateScale": "rotateScale 2s infinite",
+
 //       },
 //     },
 //   },
 //   plugins: [require("tailwindcss-animate")],
 // }
+
+
+
+
+
+//   2
+
+
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -156,14 +192,30 @@ module.exports = {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-100%)' },
         },
+        rotateScale: {
+          '0%': { transform: 'rotate(0deg) scale(1)' },
+          '50%': { transform: 'rotate(180deg) scale(1.5)' },
+          '100%': { transform: 'rotate(360deg) scale(1)' },
+        },
+        "slide-in-left": {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        "slide-in-right": {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "slide-in": "slide-in 0.6s ease-in-out",
         "slide-out": "slide-out 0.6s ease-in-out",
+        rotateScale: "rotateScale 2s ease-in-out",
+        "slide-in-left": "slide-in-left 0.6s ease-in-out",
+        "slide-in-right": "slide-in-right 0.6s ease-in-out",
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+};

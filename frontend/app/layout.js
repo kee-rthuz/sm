@@ -1,3 +1,6 @@
+
+//     old code
+
 // "use client"; // Mark this component as a client component
 
 // import { Inter } from "next/font/google";
@@ -41,35 +44,100 @@
 // }
 
 
+
+
+//   current code
+
+
+// "use client"; // Mark this component as a client component
+
+// import { Inter } from "next/font/google";
+// import "./globals.css";
+// import Sidebar from "./components/sidebar";
+// import ConditionalHeader from "./components/ConditionalHeader"; 
+// import { usePathname } from "next/navigation";
+
+// const inter = Inter({ subsets: ["latin"] });
+
+// export default function RootLayout({ children }) {
+//   const pathname = usePathname();
+
+//   return (
+//     <html lang="en" className={inter.className}>
+//       <body className="bg-gray-100 flex">
+//         {/* Sidebar is displayed only if not on login or signup pages */}
+//         {!pathname.startsWith("/signup") && !pathname.startsWith("/login") && (
+//           <Sidebar />
+//         )}
+//         <div className="flex-1 flex flex-col">
+//           {/* ConditionalHeader is displayed only if not on login or signup pages */}
+//           {!pathname.startsWith("/signup") && !pathname.startsWith("/login") && (
+//             <ConditionalHeader />
+//           )}
+//           <main className="flex-grow p-6">
+//             {children}
+//           </main>
+//         </div>
+//       </body>
+//     </html>
+//   );
+// }
+
+
+
+
+
+
+
+
+
 "use client"; // Mark this component as a client component
 
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Sidebar from "./components/sidebar";
-import ConditionalHeader from "./components/ConditionalHeader"; 
+import ConditionalHeader from "./components/ConditionalHeader";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import LoadingPage from "./loading/page";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate a loading delay
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000); // Adjust the delay as needed
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <html lang="en" className={inter.className}>
       <body className="bg-gray-100 flex">
-        {/* Sidebar is displayed only if not on login or signup pages */}
-        {!pathname.startsWith("/signup") && !pathname.startsWith("/login") && (
-          <Sidebar />
+        {loading ? (
+          <LoadingPage />
+        ) : (
+          <>
+            {/* Sidebar is displayed only if not on login or signup pages */}
+            {!pathname.startsWith("/signup") && !pathname.startsWith("/login") && (
+              <Sidebar />
+            )}
+            <div className="flex-1 flex flex-col">
+              {/* ConditionalHeader is displayed only if not on login or signup pages */}
+              {!pathname.startsWith("/signup") && !pathname.startsWith("/login") && (
+                <ConditionalHeader />
+              )}
+              <main className="flex-grow p-6">
+                {children}
+              </main>
+            </div>
+          </>
         )}
-        <div className="flex-1 flex flex-col">
-          {/* ConditionalHeader is displayed only if not on login or signup pages */}
-          {!pathname.startsWith("/signup") && !pathname.startsWith("/login") && (
-            <ConditionalHeader />
-          )}
-          <main className="flex-grow p-6">
-            {children}
-          </main>
-        </div>
       </body>
     </html>
   );
